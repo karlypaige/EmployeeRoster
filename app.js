@@ -186,11 +186,21 @@ function constructIntern() {
   .then ((data) => {
     employees.push(new Intern(data.name, data.id, data.email, data.school));
     if (data.repeat === true) {
-    
+      //call function to construct as many interns as needed
       constructIntern();
     }else{
-      console.log(employees);
-      render();
+      fs.stat(OUTPUT_DIR, (err, stats) => {
+        if (err) {
+          if(err.errno === -4058){
+            fs.mkdir(OUTPUT_DIR, (err) => 
+              err ? console.error(err) : console.log('Commit logged!')
+            )
+          }
+        }
+      })
+      fs.appendFile("./output/team.html", `'${render(employees)}'`, (err) => 
+        err ? console.error(err) : console.log('Commit logged!')
+      );
     };
   });
 };
