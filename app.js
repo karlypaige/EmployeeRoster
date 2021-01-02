@@ -4,6 +4,7 @@ const Intern = require("./lib/Intern");
 const inquirer = require("inquirer");
 const path = require("path");
 const fs = require("fs");
+const http = require("http");
 
 const OUTPUT_DIR = path.resolve(__dirname, "output");
 const outputPath = path.join(OUTPUT_DIR, "team.html");
@@ -188,19 +189,46 @@ function constructIntern() {
     if (data.repeat === true) {
       //call function to construct as many interns as needed
       constructIntern();
-    }else{
+    } else {  //once all interns are entered then output the results
+      //if directory doesn't exist create it
       fs.stat(OUTPUT_DIR, (err, stats) => {
         if (err) {
           if(err.errno === -4058){
             fs.mkdir(OUTPUT_DIR, (err) => 
-              err ? console.error(err) : console.log('Commit logged!')
+              err ? console.error(err) : console.log('Directory Created!')
             )
           }
         }
+        //append the file to the new directory
+        fs.appendFile("./output/team.html", `'${render(employees)}'`, (err) => 
+          err ? console.error(err) : console.log('File Appended!')
+        );
+
+        var server = http.createServer(function (req, resp) {
+          if (req.url === "/") {
+            fs.readFile("./output/team.html", function (err, pgResp){
+              if (err) {
+                resp.writeHead(404);
+                resp.write('Contents you are looking for are Not Found');
+              } else {
+                resp.writeHead(200, { 'Content-Type': 'text/html' });
+                resp.write(pgResp);
+              }
+              resp.end();
+            });
+          } else {
+            //4.
+            resp.writeHead(200, { 'Content-Type': 'text/html' });
+            resp.write('<h1>Product Manaager</h1><br /><br />To create product please enter: ' + req.url);
+            resp.end();
+          }
+        });
+        //5.
+        server.listen(5050);
+        
+        console.log('Server Started listening on 5050');
+        
       })
-      fs.appendFile("./output/team.html", `'${render(employees)}'`, (err) => 
-        err ? console.error(err) : console.log('Commit logged!')
-      );
     };
   });
 };
